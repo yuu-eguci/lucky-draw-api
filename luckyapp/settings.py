@@ -42,11 +42,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'attendee',
     'rest_framework', # django restframework api
+    'corsheaders', # allow cors
+]
+
+CORS_ALLOW_CREDENTIALS = True # allow cors
+CORS_ORIGIN_ALLOW_ALL  = True # allow cors
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware', # allow cors
+    'corsheaders.middleware.CorsMiddleware', # allow cors
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
