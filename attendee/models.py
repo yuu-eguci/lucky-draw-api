@@ -17,7 +17,6 @@ class Attendee(models.Model):
     name  = models.CharField(
         max_length = MAX_NAME_LEN,
         validators = [
-            validate_slug,
             MinLengthValidator,
             MaxLengthValidator
         ]
