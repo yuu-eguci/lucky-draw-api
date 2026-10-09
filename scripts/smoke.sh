@@ -14,7 +14,7 @@ ID=""
 cleanup() {
     # 途中で失敗しても、登録した参加者を残さないように削除します
     if [ -n "$ID" ]; then
-        curl -sS -o /dev/null -X DELETE "$API/$ID/" || true
+        curl -sS --max-time 10 -o /dev/null -X DELETE "$API/$ID/" || true
     fi
     rm -f "$BODY_FILE"
 }
@@ -32,7 +32,7 @@ request() {
     expected="$1"
     label="$2"
     shift 2
-    status="$(curl -sS -o "$BODY_FILE" -w '%{http_code}' "$@")" || fail "$label: 接続できません"
+    status="$(curl -sS --max-time 10 -o "$BODY_FILE" -w '%{http_code}' "$@")" || fail "$label: 接続できません"
     [ "$status" = "$expected" ] || fail "$label: $expected のはずが $status"
     echo "OK: $label ($status)"
 }
@@ -58,12 +58,12 @@ json 400 "短すぎる phone" PATCH '{"phone": "1234567"}' "$API/$ID/"
 json 200 "末尾 / なしの PATCH" PATCH '{"name": "smoke2"}' "$API/$ID"
 grep -q '"name":"smoke2"' "$BODY_FILE" || fail "PATCH が反映されていません"
 
-curl -sS -o /dev/null -D "$BODY_FILE" -H 'Origin: http://localhost:3000' "$API/" || fail "CORS: 接続できません"
+curl -sS --max-time 10 -o /dev/null -D "$BODY_FILE" -H 'Origin: http://localhost:3000' "$API/" || fail "CORS: 接続できません"
 ALLOW_ORIGIN="$(tr -d '\r' < "$BODY_FILE" | sed -n 's/^[Aa]ccess-[Cc]ontrol-[Aa]llow-[Oo]rigin: //p')"
 [ "$ALLOW_ORIGIN" = "http://localhost:3000" ] || fail "CORS ヘッダがありません"
 echo "OK: CORS (http://localhost:3000)"
 
-curl -sS -o /dev/null -D "$BODY_FILE" -X OPTIONS -H 'Origin: http://localhost:3000' \
+curl -sS --max-time 10 -o /dev/null -D "$BODY_FILE" -X OPTIONS -H 'Origin: http://localhost:3000' \
     -H 'Access-Control-Request-Method: DELETE' -H 'Access-Control-Request-Headers: content-type' \
     "$API/$ID/" || fail "CORS preflight: 接続できません"
 tr -d '\r' < "$BODY_FILE" | grep -i '^access-control-allow-methods:.*DELETE' >/dev/null || fail "CORS preflight で DELETE が許可されていません"
