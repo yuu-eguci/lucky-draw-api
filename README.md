@@ -31,16 +31,18 @@ curl http://localhost:8080/api/v1/attendee/
 ## ダミーの参加者を入れたい
 
 ```bash
-docker compose run --rm --build api python manage.py seed_attendees --count 30
+docker compose up --build --detach --wait
+docker compose run --rm api python manage.py seed_attendees --count 30
 ```
 
 - `seed0001@example.com` のようなダミーの参加者を `--count` 人 (既定 10 人、最大 9999 人) 登録します。
 - もう一度実行しても、登録済みのダミーは追加されません。
-- 起動中のサービスと同じ Docker volume の DB に登録されます。
+- 起動中のサービスと同じ Docker volume の DB に登録されます。 DB の準備はサービス起動時に行うので、先に `up` しておきます。
 
 ## 参加者データを退避・復元したい
 
 ```bash
+docker compose up --build --detach --wait
 docker compose run --rm -T api python manage.py dumpdata attendee --indent 2 > attendees.json
 docker compose run --rm -T api python manage.py loaddata --format json - < attendees.json
 ```
