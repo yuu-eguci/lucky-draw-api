@@ -1,0 +1,7 @@
+.git
+**/__pycache__
+*.py[cod]
+db.sqlite3
+.venv
+.ruff_cache
+docs/iona-kest.md
