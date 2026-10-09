@@ -19,6 +19,9 @@ cleanup() {
     rm -f "$BODY_FILE"
 }
 trap cleanup EXIT
+# dash ではシグナルで終了すると EXIT の trap が動かないため、exit を経由させます
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 fail() {
     echo "NG: $1" >&2
