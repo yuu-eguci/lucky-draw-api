@@ -106,7 +106,7 @@ docker compose up --build --detach --wait
 sh scripts/smoke.sh
 ```
 
-- `scripts/smoke.sh` は毎回ちがう参加者を1人登録し、最後に削除します。
+- `scripts/smoke.sh` は毎回ちがう参加者を1人登録し、途中で失敗しても最後に削除します。
 - 確認先は `SMOKE_BASE_URL` (既定 `http://localhost:8080`) で変えられます。
 
 ## Docker なしで起動する

@@ -9,7 +9,16 @@ SUFFIX="$(date +%s)$$"
 EMAIL="smoke-$SUFFIX@example.com"
 PHONE="$(printf '%s' "$SUFFIX" | tail -c 10)"
 BODY_FILE="$(mktemp)"
-trap 'rm -f "$BODY_FILE"' EXIT
+ID=""
+
+cleanup() {
+    # 途中で失敗しても、登録した参加者を残さないように削除します
+    if [ -n "$ID" ]; then
+        curl -sS -o /dev/null -X DELETE "$API/$ID/" || true
+    fi
+    rm -f "$BODY_FILE"
+}
+trap cleanup EXIT
 
 fail() {
     echo "NG: $1" >&2
@@ -49,11 +58,14 @@ json 400 "短すぎる phone" PATCH '{"phone": "1234567"}' "$API/$ID/"
 json 200 "末尾 / なしの PATCH" PATCH '{"name": "smoke2"}' "$API/$ID"
 grep -q '"name":"smoke2"' "$BODY_FILE" || fail "PATCH が反映されていません"
 
-ALLOW_ORIGIN="$(curl -sS -o /dev/null -D - -H 'Origin: http://localhost:3000' "$API/" | tr -d '\r' | sed -n 's/^[Aa]ccess-[Cc]ontrol-[Aa]llow-[Oo]rigin: //p')"
+curl -sS -o /dev/null -D "$BODY_FILE" -H 'Origin: http://localhost:3000' "$API/" || fail "CORS: 接続できません"
+ALLOW_ORIGIN="$(tr -d '\r' < "$BODY_FILE" | sed -n 's/^[Aa]ccess-[Cc]ontrol-[Aa]llow-[Oo]rigin: //p')"
 [ "$ALLOW_ORIGIN" = "http://localhost:3000" ] || fail "CORS ヘッダがありません"
 echo "OK: CORS (http://localhost:3000)"
 
 request 204 "削除" -X DELETE "$API/$ID/"
-request 404 "削除後の取得" "$API/$ID/"
+DELETED_ID="$ID"
+ID=""
+request 404 "削除後の取得" "$API/$DELETED_ID/"
 
 echo "smoke test: すべて OK"
