@@ -341,7 +341,7 @@ class SeedAttendeesCommandTests(TestCase):
         return out.getvalue()
 
     def test_creates_valid_synthetic_attendees(self):
-        self.assertEqual(self.seed().strip(), "created: 10, skipped: 0")
+        self.assertEqual(self.seed().strip(), "created: 10, existing: 0, skipped: 0")
         self.assertEqual(Attendee.objects.count(), 10)
         for attendee in Attendee.objects.all():
             attendee.full_clean()
@@ -349,7 +349,9 @@ class SeedAttendeesCommandTests(TestCase):
 
     def test_is_idempotent_and_extends_by_count(self):
         self.seed("--count", "3")
-        self.seed("--count", "5")
+        self.assertEqual(
+            self.seed("--count", "5").strip(), "created: 2, existing: 3, skipped: 0"
+        )
         self.assertEqual(Attendee.objects.count(), 5)
 
     def test_skips_seed_whose_phone_is_already_used(self):
@@ -357,7 +359,9 @@ class SeedAttendeesCommandTests(TestCase):
         phone = Attendee.objects.get().phone
         Attendee.objects.all().delete()
         Attendee.objects.create(name="real", email="real@example.com", phone=phone)
-        self.assertEqual(self.seed("--count", "2").strip(), "created: 1, skipped: 1")
+        self.assertEqual(
+            self.seed("--count", "2").strip(), "created: 1, existing: 0, skipped: 1"
+        )
         self.assertEqual(Attendee.objects.count(), 2)
         self.assertEqual(Attendee.objects.get(phone=phone).name, "real")
 

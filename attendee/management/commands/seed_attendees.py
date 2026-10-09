@@ -16,10 +16,11 @@ class Command(BaseCommand):
         if not 1 <= count <= MAX_COUNT:
             raise CommandError(f"--count は 1 から {MAX_COUNT} で指定してください")
 
-        created = skipped = 0
+        created = existing = skipped = 0
         for number in range(1, count + 1):
             email = f"seed{number:04d}@example.com"
             if Attendee.objects.filter(email=email).exists():
+                existing += 1
                 continue
             attendee = Attendee(
                 name=f"Seed {number:04d}", email=email, phone=f"0900{number:06d}"
@@ -33,4 +34,6 @@ class Command(BaseCommand):
             attendee.save()
             created += 1
 
-        self.stdout.write(f"created: {created}, skipped: {skipped}")
+        self.stdout.write(
+            f"created: {created}, existing: {existing}, skipped: {skipped}"
+        )
