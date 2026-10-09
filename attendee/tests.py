@@ -1,12 +1,14 @@
 import os
 import subprocess
 import sys
+from unittest import mock
 
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from rest_framework.test import APIClient
 
 from .models import Attendee
+from .serializers import AttendeeSerializer
 
 LIST_URL = "/api/v1/attendee/"
 
@@ -216,3 +218,41 @@ class AttendeeEdgeCaseTests(TestCase):
         )
         self.assertEqual(res.status_code, 400)
         self.assertEqual(set(res.json()), {"name"})
+
+
+class ConcurrentDuplicateTests(TestCase):
+    """検証のあと保存までの間に、別リクエストが同じ値を登録した場合を再現します。"""
+
+    def save_after_competitor(self, competitor):
+        inserted = []
+
+        def racing_validate(serializer, attrs):
+            # 一意性の検証が済んだあとに、別リクエストの登録が割り込んだ状態にします
+            if not inserted:
+                inserted.append(Attendee.objects.create(**competitor))
+            return attrs
+
+        return mock.patch.object(
+            AttendeeSerializer, "validate", racing_validate, create=True
+        )
+
+    def test_create_race_returns_400_instead_of_500(self):
+        with self.save_after_competitor(VALID):
+            res = self.client.post(LIST_URL, VALID, content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"email", "phone"})
+        self.assertEqual(Attendee.objects.count(), 1)
+
+    def test_update_race_returns_400_instead_of_500(self):
+        attendee = Attendee.objects.create(**VALID)
+        competitor = {"name": "jiro", "email": "jiro@example.com", "phone": "08012345"}
+        with self.save_after_competitor(competitor):
+            res = self.client.patch(
+                detail_url(attendee.pk),
+                {"email": competitor["email"]},
+                content_type="application/json",
+            )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"email"})
+        attendee.refresh_from_db()
+        self.assertEqual(attendee.email, VALID["email"])
