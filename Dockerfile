@@ -3,7 +3,8 @@ FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    RUFF_CACHE_DIR=/tmp/.ruff_cache
 
 WORKDIR /app
 COPY requirements.txt requirements-dev.txt ./
