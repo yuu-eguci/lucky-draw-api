@@ -94,6 +94,24 @@ class CorsTests(TestCase):
         res = self.client.get(LIST_URL, headers={"Origin": "http://evil.example"})
         self.assertNotIn("Access-Control-Allow-Origin", res.headers)
 
+    def test_preflight_for_json_writes_is_allowed(self):
+        res = self.client.options(
+            detail_url(1),
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "DELETE",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(
+            res.headers["Access-Control-Allow-Origin"], "http://localhost:3000"
+        )
+        methods = res.headers["Access-Control-Allow-Methods"]
+        for method in ("POST", "PUT", "PATCH", "DELETE"):
+            self.assertIn(method, methods)
+        self.assertIn("content-type", res.headers["Access-Control-Allow-Headers"])
+
 
 class AttendeeValidationBoundaryTests(TestCase):
     def post(self, **overrides):
@@ -256,6 +274,42 @@ class ConcurrentDuplicateTests(TestCase):
         self.assertEqual(set(res.json()), {"email"})
         attendee.refresh_from_db()
         self.assertEqual(attendee.email, VALID["email"])
+
+    def test_put_race_returns_400_instead_of_500(self):
+        attendee = Attendee.objects.create(**VALID)
+        competitor = {"name": "jiro", "email": "jiro@example.com", "phone": "08012345"}
+        with self.save_after_competitor(competitor):
+            res = self.client.put(
+                detail_url(attendee.pk),
+                {**VALID, "phone": competitor["phone"]},
+                content_type="application/json",
+            )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"phone"})
+
+
+class LegacyAdminPrefixTests(TestCase):
+    """昔からの /admin/attendee/ 配下でも同じ API を呼べることを確認します。"""
+
+    def test_crud_on_admin_prefix_with_and_without_slash(self):
+        attendee = Attendee.objects.create(**VALID)
+        for url in (
+            f"/admin/attendee/{attendee.pk}/",
+            f"/admin/attendee/{attendee.pk}",
+        ):
+            self.assertEqual(self.client.get(url).json()["email"], VALID["email"])
+            res = self.client.put(url, VALID, content_type="application/json")
+            self.assertEqual(res.status_code, 200)
+            res = self.client.patch(
+                url, {"name": "jiro"}, content_type="application/json"
+            )
+            self.assertEqual(res.status_code, 200)
+        self.assertEqual(
+            self.client.delete(f"/admin/attendee/{attendee.pk}").status_code, 204
+        )
+        self.assertEqual(
+            self.client.get(f"/admin/attendee/{attendee.pk}/").status_code, 404
+        )
 
 
 class NoTrailingSlashTests(TestCase):

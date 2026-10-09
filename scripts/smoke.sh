@@ -63,6 +63,12 @@ ALLOW_ORIGIN="$(tr -d '\r' < "$BODY_FILE" | sed -n 's/^[Aa]ccess-[Cc]ontrol-[Aa]
 [ "$ALLOW_ORIGIN" = "http://localhost:3000" ] || fail "CORS ヘッダがありません"
 echo "OK: CORS (http://localhost:3000)"
 
+curl -sS -o /dev/null -D "$BODY_FILE" -X OPTIONS -H 'Origin: http://localhost:3000' \
+    -H 'Access-Control-Request-Method: DELETE' -H 'Access-Control-Request-Headers: content-type' \
+    "$API/$ID/" || fail "CORS preflight: 接続できません"
+tr -d '\r' < "$BODY_FILE" | grep -i '^access-control-allow-methods:.*DELETE' >/dev/null || fail "CORS preflight で DELETE が許可されていません"
+echo "OK: CORS preflight (DELETE)"
+
 request 204 "削除" -X DELETE "$API/$ID/"
 DELETED_ID="$ID"
 ID=""
