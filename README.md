@@ -28,6 +28,16 @@ curl http://localhost:8080/api/v1/attendee/
 - 開発用・認証なし。自分の PC からだけアクセスできる設定なので、インターネットには公開しない。
 - 同じ登録例をもう一度送ると、メールアドレスと電話番号の重複で 400 が返る。
 
+## ダミーの参加者を入れたい
+
+```bash
+docker compose run --rm --build api python manage.py seed_attendees --count 30
+```
+
+- `seed0001@example.com` のようなダミーの参加者を `--count` 人 (既定 10 人、最大 9999 人) 登録します。
+- もう一度実行しても、登録済みのダミーは追加されません。
+- 起動中のサービスと同じ Docker volume の DB に登録されます。
+
 ## API
 
 | メソッド | パス | 内容 |

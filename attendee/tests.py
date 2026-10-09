@@ -1,9 +1,11 @@
 import os
 import subprocess
 import sys
+from io import StringIO
 from unittest import mock
 
 from django.conf import settings
+from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase
 from rest_framework.test import APIClient
 
@@ -276,3 +278,36 @@ class NoTrailingSlashTests(TestCase):
             "/admin/attendee", VALID, content_type="application/json"
         )
         self.assertEqual(res.status_code, 201)
+
+
+class SeedAttendeesCommandTests(TestCase):
+    def seed(self, *args):
+        out = StringIO()
+        call_command("seed_attendees", *args, stdout=out)
+        return out.getvalue()
+
+    def test_creates_valid_synthetic_attendees(self):
+        self.assertEqual(self.seed().strip(), "created: 10, skipped: 0")
+        self.assertEqual(Attendee.objects.count(), 10)
+        for attendee in Attendee.objects.all():
+            attendee.full_clean()
+            self.assertTrue(attendee.email.endswith("@example.com"))
+
+    def test_is_idempotent_and_extends_by_count(self):
+        self.seed("--count", "3")
+        self.seed("--count", "5")
+        self.assertEqual(Attendee.objects.count(), 5)
+
+    def test_skips_seed_whose_phone_is_already_used(self):
+        self.seed("--count", "1")
+        phone = Attendee.objects.get().phone
+        Attendee.objects.all().delete()
+        Attendee.objects.create(name="real", email="real@example.com", phone=phone)
+        self.assertEqual(self.seed("--count", "2").strip(), "created: 1, skipped: 1")
+        self.assertEqual(Attendee.objects.count(), 2)
+        self.assertEqual(Attendee.objects.get(phone=phone).name, "real")
+
+    def test_rejects_out_of_range_count(self):
+        for count in ("0", "10000"):
+            with self.assertRaises(CommandError):
+                self.seed("--count", count)
