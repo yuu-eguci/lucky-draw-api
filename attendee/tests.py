@@ -369,3 +369,21 @@ class SeedAttendeesCommandTests(TestCase):
         for count in ("0", "10000"):
             with self.assertRaises(CommandError):
                 self.seed("--count", count)
+
+
+class ErrorLanguageTests(TestCase):
+    """エラーの言語は Accept-Language で変わり、キーは変わらないことを確認します。"""
+
+    def test_error_messages_follow_accept_language(self):
+        body = {"name": "x", "email": "bad", "phone": "1"}
+        en = self.client.post(LIST_URL, body, content_type="application/json")
+        ja = self.client.post(
+            LIST_URL,
+            body,
+            content_type="application/json",
+            headers={"Accept-Language": "ja"},
+        )
+        self.assertEqual(set(en.json()), set(ja.json()))
+        self.assertEqual(en.json()["email"], ["Enter a valid email address."])
+        self.assertEqual(ja.headers["Content-Language"], "ja")
+        self.assertNotEqual(en.json()["email"], ja.json()["email"])
