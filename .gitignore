@@ -1,8 +1,14 @@
 # db
 db.sqlite3
+db.sqlite3-*
 
 # python
 __pycache__/
 *.py[cod]
 .venv/
 .ruff_cache/
+
+# secrets / OS
+.env
+.env.*
+.DS_Store
