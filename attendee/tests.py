@@ -256,3 +256,25 @@ class ConcurrentDuplicateTests(TestCase):
         self.assertEqual(set(res.json()), {"email"})
         attendee.refresh_from_db()
         self.assertEqual(attendee.email, VALID["email"])
+
+
+class NoTrailingSlashTests(TestCase):
+    """末尾の / を省略した書き込みも、/ 付きと同じように扱われることを確認します。"""
+
+    def test_crud_without_trailing_slash(self):
+        res = self.client.post(
+            LIST_URL.rstrip("/"), VALID, content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 201)
+        url = detail_url(res.json()["id"]).rstrip("/")
+        self.assertEqual(self.client.get(url).json()["email"], VALID["email"])
+        res = self.client.patch(url, {"name": "jiro"}, content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(self.client.delete(url).status_code, 204)
+        self.assertEqual(self.client.get(LIST_URL.rstrip("/")).json(), [])
+
+    def test_legacy_admin_prefix_without_trailing_slash(self):
+        res = self.client.post(
+            "/admin/attendee", VALID, content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 201)

@@ -49,7 +49,7 @@ curl -X PATCH http://localhost:8080/api/v1/attendee/1/ \
 curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 ```
 
-- URL の末尾の `/` は省略しない。
+- 末尾の `/` は省略しても同じように動く。返る URL は `/` 付き。
 - `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) を取得できる。
 - 入力エラーは 400。 `{"phone": ["..."]}` のように項目ごとの JSON が返る。
 - `name`: 1-64 文字。日本語も使える。

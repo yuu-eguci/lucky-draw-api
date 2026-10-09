@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from .api_routers import router
+from .api_routers import no_slash_router, router
 
 # Django 3.2+ の admin は未定義パスをログイン画面へ転送するため、
 # 従来の /admin/attendee/ が router に届くよう無効にします
@@ -28,4 +28,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("admin/", include(router.urls)),
     path(API_V1_BASE_PATH, include(router.urls)),  # include api url pattern here
+    path("admin/", include(no_slash_router.urls)),
+    path(API_V1_BASE_PATH, include(no_slash_router.urls)),
 ]
