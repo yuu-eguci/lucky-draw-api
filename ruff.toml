@@ -1,0 +1,8 @@
+target-version = "py314"
+extend-exclude = ["*/migrations/*"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ"]
+
+[lint.per-file-ignores]
+"luckyapp/settings.py" = ["E501"]
