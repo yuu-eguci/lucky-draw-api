@@ -1,4 +1,9 @@
-from django.test import TestCase
+import os
+import subprocess
+import sys
+
+from django.conf import settings
+from django.test import SimpleTestCase, TestCase
 from rest_framework.test import APIClient
 
 from .models import Attendee
@@ -178,3 +183,24 @@ class ApiRootTests(TestCase):
         res = self.client.get("/api/v1/", headers={"Accept": "application/json"})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json(), {"attendee": "http://testserver/api/v1/attendee/"})
+
+
+class SettingsGuardTests(SimpleTestCase):
+    def run_check(self, **env):
+        base = {k: v for k, v in os.environ.items() if not k.startswith("DJANGO_")}
+        return subprocess.run(
+            [sys.executable, "manage.py", "check"],
+            cwd=settings.BASE_DIR,
+            env={**base, **env},
+            capture_output=True,
+            text=True,
+        )
+
+    def test_non_debug_without_secret_key_fails(self):
+        res = self.run_check(DJANGO_DEBUG="0")
+        self.assertNotEqual(res.returncode, 0)
+        self.assertIn("DJANGO_SECRET_KEY is required", res.stderr)
+
+    def test_non_debug_with_secret_key_passes(self):
+        res = self.run_check(DJANGO_DEBUG="0", DJANGO_SECRET_KEY="test-only-key")
+        self.assertEqual(res.returncode, 0)
