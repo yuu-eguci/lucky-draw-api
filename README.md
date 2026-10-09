@@ -91,4 +91,4 @@ DJANGO_DEBUG=1 python manage.py runserver 0.0.0.0:8080
 ## Access to Django WEB
 After dev django server is ready, you can access API page from browser.
 
-`http://localhost:8080/api/v1`
+`http://localhost:8080/api/v1/`

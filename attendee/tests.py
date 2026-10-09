@@ -204,3 +204,21 @@ class SettingsGuardTests(SimpleTestCase):
     def test_non_debug_with_secret_key_passes(self):
         res = self.run_check(DJANGO_DEBUG="0", DJANGO_SECRET_KEY="test-only-key")
         self.assertEqual(res.returncode, 0)
+
+
+class AttendeeEdgeCaseTests(TestCase):
+    def test_deleted_attendee_is_gone_and_second_delete_is_404(self):
+        attendee = Attendee.objects.create(**VALID)
+        self.assertEqual(self.client.delete(detail_url(attendee.pk)).status_code, 204)
+        self.assertEqual(self.client.get(detail_url(attendee.pk)).status_code, 404)
+        self.assertEqual(self.client.delete(detail_url(attendee.pk)).status_code, 404)
+
+    def test_non_numeric_id_is_404(self):
+        self.assertEqual(self.client.get(detail_url("abc")).status_code, 404)
+
+    def test_name_over_64_chars_is_rejected(self):
+        res = self.client.post(
+            LIST_URL, {**VALID, "name": "山" * 65}, content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"name"})
