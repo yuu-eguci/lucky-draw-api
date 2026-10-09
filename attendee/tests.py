@@ -84,3 +84,97 @@ class CorsTests(TestCase):
     def test_unknown_origin_is_not_allowed(self):
         res = self.client.get(LIST_URL, headers={"Origin": "http://evil.example"})
         self.assertNotIn("Access-Control-Allow-Origin", res.headers)
+
+
+class AttendeeValidationBoundaryTests(TestCase):
+    def post(self, **overrides):
+        return self.client.post(
+            LIST_URL, {**VALID, **overrides}, content_type="application/json"
+        )
+
+    def test_boundary_lengths_are_accepted(self):
+        self.assertEqual(self.post(name="a" * 64, phone="12345678").status_code, 201)
+        res = self.post(name="b", email="b@example.com", phone="1234567890")
+        self.assertEqual(res.status_code, 201)
+
+    def test_empty_name_is_rejected(self):
+        res = self.post(name="")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("name", res.json())
+
+    def test_unicode_name_is_accepted(self):
+        res = self.post(name="山田 太郎")
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(Attendee.objects.get().name, "山田 太郎")
+
+    def test_non_ascii_phone_is_rejected(self):
+        res = self.post(phone="０９０１２３４５")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("phone", res.json())
+
+    def test_missing_fields_are_rejected(self):
+        res = self.client.post(LIST_URL, {}, content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"name", "email", "phone"})
+
+
+class AttendeeUpdateTests(TestCase):
+    def setUp(self):
+        self.attendee = Attendee.objects.create(**VALID)
+        self.other = Attendee.objects.create(
+            name="jiro", email="jiro@example.com", phone="08012345"
+        )
+
+    def test_put_replaces_all_fields(self):
+        body = {"name": "saburo", "email": "saburo@example.com", "phone": "0701234567"}
+        res = self.client.put(
+            detail_url(self.attendee.pk), body, content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {"id": self.attendee.pk, **body})
+
+    def test_put_without_all_fields_is_rejected(self):
+        res = self.client.put(
+            detail_url(self.attendee.pk), {"name": "x"}, content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 400)
+
+    def test_update_to_other_attendees_email_is_rejected(self):
+        res = self.client.patch(
+            detail_url(self.attendee.pk),
+            {"email": self.other.email},
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("email", res.json())
+
+    def test_patch_keeping_own_values_is_accepted(self):
+        res = self.client.patch(
+            detail_url(self.attendee.pk),
+            {"phone": VALID["phone"]},
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+
+
+class NotFoundTests(TestCase):
+    def test_missing_attendee_returns_json_404(self):
+        for method in ("get", "put", "patch", "delete"):
+            res = getattr(self.client, method)(
+                detail_url(999), {}, content_type="application/json"
+            )
+            self.assertEqual(res.status_code, 404, method)
+            self.assertIn("detail", res.json())
+
+    def test_unknown_path_does_not_leak_debug_page(self):
+        res = self.client.get("/no-such-path/")
+        self.assertEqual(res.status_code, 404)
+        self.assertNotIn(b"urlpatterns", res.content)
+        self.assertNotIn(b"Traceback", res.content)
+
+
+class ApiRootTests(TestCase):
+    def test_api_root_lists_attendee_endpoint(self):
+        res = self.client.get("/api/v1/", headers={"Accept": "application/json"})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {"attendee": "http://testserver/api/v1/attendee/"})
