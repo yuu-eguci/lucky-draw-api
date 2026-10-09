@@ -23,7 +23,7 @@ curl http://localhost:8080/api/v1/attendee/
 
 - 起動時に DB を準備して、開発サーバを `localhost:8080` で立ち上げる。
 - POST の例で参加者を1人登録し、続く GET で一覧を取得する。
-- データは Docker volume の SQLite に保存する。コンテナを作り直しても残る。
+- データは Docker volume の SQLite に保存する。コンテナを作り直しても残る。 `docker compose down --volumes` で消える。
 - ブラウザで `http://localhost:8080/api/v1/` を開くと、DRF の画面から API を試せる。
 - 開発用・認証なし。自分の PC からだけアクセスできる設定なので、インターネットには公開しない。
 - 同じ登録例をもう一度送ると、メールアドレスと電話番号の重複で 400 が返る。
@@ -61,7 +61,7 @@ curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 
 | 変数 | 既定値 | 内容 |
 |---|---|---|
-| `DJANGO_DEBUG` | `0` (compose では `1`) | `1` で開発用 DEBUG を有効化 |
+| `DJANGO_DEBUG` | `0` (compose では `1`) | `1` で開発用 DEBUG を有効化。 `0` では DRF 画面の CSS は配信されません (JSON API は動きます) |
 | `DJANGO_SECRET_KEY` | DEBUG 時だけ開発用の値 | DEBUG でないときは必須 |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | カンマ区切り |
 | `DJANGO_CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080` | カンマ区切り |
@@ -98,8 +98,11 @@ python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 DJANGO_DEBUG=1 python manage.py migrate
-DJANGO_DEBUG=1 python manage.py runserver 0.0.0.0:8080
+DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8080
 ```
+
+- Windows の PowerShell では、先に `$env:DJANGO_DEBUG = "1"` を実行してから `python manage.py ...` を実行します。
+- テストは `DJANGO_DEBUG=1 python manage.py test` で実行します。
 
 起動後は `http://localhost:8080/api/v1/` を開けば OK。
 Docker なしの場合、データはプロジェクト内の `db.sqlite3` に保存する。
