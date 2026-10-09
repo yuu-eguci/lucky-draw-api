@@ -1,14 +1,14 @@
 RESTful API for Lucky Draw
 ===
 
-抽選アプリ (cshimegi/lucky-draw-gui) で使う参加者 (attendee) を登録・取得・更新・削除する API です。
+抽選アプリ [lucky-draw-gui](https://github.com/cshimegi/lucky-draw-gui) の参加者を登録・取得・更新・削除する API。
 
 - Docker: 対応!
 - Python: 3.14!
 - Linter: Ruff!
 - Test: Django test runner (unittest) + DRF APIClient!
-- Django: 5.2 (LTS)!
-- Django REST framework: 3.18!
+- Django: 5.2.18 (LTS)!
+- Django REST framework: 3.18.3!
 
 ## パッと実行してみたい
 
@@ -21,10 +21,12 @@ curl -X POST http://localhost:8080/api/v1/attendee/ \
 curl http://localhost:8080/api/v1/attendee/
 ```
 
-- コンテナ起動時に migrate してから開発サーバを `localhost:8080` で立ち上げます
-- データは Docker volume (`lucky-draw-data`) の SQLite に保存されます
-- ブラウザで `http://localhost:8080/api/v1/` を開くと DRF の画面で API を試せます
-- 開発用の設定です。認証はないので、インターネットに公開しないでください
+- 起動時に DB を準備して、開発サーバを `localhost:8080` で立ち上げる。
+- POST の例で参加者を1人登録し、続く GET で一覧を取得する。
+- データは Docker volume の SQLite に保存する。コンテナを作り直しても残る。
+- ブラウザで `http://localhost:8080/api/v1/` を開くと、DRF の画面から API を試せる。
+- 開発用・認証なし。自分の PC からだけアクセスできる設定なので、インターネットには公開しない。
+- 同じ登録例をもう一度送ると、メールアドレスと電話番号の重複で 400 が返る。
 
 ## API
 
@@ -37,6 +39,7 @@ curl http://localhost:8080/api/v1/attendee/
 | DELETE | `/api/v1/attendee/{id}/` | 削除 |
 
 ```bash
+# 登録時に返った id を使う。ここでは 1 とする。
 curl http://localhost:8080/api/v1/attendee/1/
 curl -X PUT http://localhost:8080/api/v1/attendee/1/ \
   -H 'Content-Type: application/json' \
@@ -46,19 +49,19 @@ curl -X PATCH http://localhost:8080/api/v1/attendee/1/ \
 curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 ```
 
-- 末尾の `/` は必須です
-- `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) が返ります
-- 入力エラーは 400 で `{"phone": ["..."]}` のような JSON が返ります
-- `name`: 1-64 文字 (日本語も可)
-- `email`: メールアドレス、重複不可
-- `phone`: 8-10 文字の英数字・`-`・`_`、重複不可
-- 同じ API は昔からの `/admin/attendee/` でも呼べます
+- URL の末尾の `/` は省略しない。
+- `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) を取得できる。
+- 入力エラーは 400。 `{"phone": ["..."]}` のように項目ごとの JSON が返る。
+- `name`: 1-64 文字。日本語も使える。
+- `email`: メールアドレス。重複不可。
+- `phone`: 8-10 文字の英数字・`-`・`_`。重複不可。先頭の 0 を残すため、文字列で送る。
+- 同じ API は昔からの `/admin/attendee/` でも呼べる。
 
 ## 設定 (環境変数)
 
 | 変数 | 既定値 | 内容 |
 |---|---|---|
-| `DJANGO_DEBUG` | `0` (compose では `1`) | `1` で DEBUG |
+| `DJANGO_DEBUG` | `0` (compose では `1`) | `1` で開発用 DEBUG を有効化 |
 | `DJANGO_SECRET_KEY` | DEBUG 時だけ開発用の値 | DEBUG でないときは必須 |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | カンマ区切り |
 | `DJANGO_CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080` | カンマ区切り |
@@ -73,10 +76,7 @@ docker compose run --rm api python manage.py test
 docker compose run --rm api pip-audit -r requirements.txt
 ```
 
-## Requirements
-1. Use with **cshimegi/lucky-draw-gui**
-
-## Installation from scratch (Docker なし)
+## Docker なしで起動する
 
 ```bash
 git clone https://github.com/yuu-eguci/lucky-draw-api.git
@@ -88,7 +88,5 @@ DJANGO_DEBUG=1 python manage.py migrate
 DJANGO_DEBUG=1 python manage.py runserver 0.0.0.0:8080
 ```
 
-## Access to Django WEB
-After dev django server is ready, you can access API page from browser.
-
-`http://localhost:8080/api/v1/`
+起動後は `http://localhost:8080/api/v1/` を開けば OK。
+Docker なしの場合、データはプロジェクト内の `db.sqlite3` に保存する。
