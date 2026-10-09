@@ -72,7 +72,7 @@ curl -X PATCH http://localhost:8080/api/v1/attendee/1/ \
 curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 ```
 
-- 末尾の `/` は省略しても同じように動く。 API root (`/api/v1/`) が返す URL は `/` 付き。
+- `/attendee` 以下のパスは末尾の `/` を省略しても同じように動く。 API root は `/api/v1/` (`/` 付き) で開き、返す URL も `/` 付き。
 - `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) を取得できる。
 - 入力エラーは 400。 `{"phone": ["..."]}` のように項目ごとの JSON が返る。
 - エラーメッセージの言語はリクエストの `Accept-Language` に合わせて変わります (例: `ja` なら日本語、指定なしなら英語)。項目名のキーは変わりません。
