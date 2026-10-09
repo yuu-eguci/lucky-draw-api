@@ -70,11 +70,24 @@ curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 ## 開発
 
 ```bash
-docker compose run --rm api ruff check .
-docker compose run --rm api ruff format --check .
-docker compose run --rm api python manage.py test
-docker compose run --rm api pip-audit -r requirements.txt
+docker compose run --rm --build api ruff check .
+docker compose run --rm --build api ruff format --check .
+docker compose run --rm --build api python manage.py makemigrations --check --dry-run
+docker compose run --rm --build api python manage.py test
+docker compose run --rm --build api pip-audit -r requirements.txt
 ```
+
+- コードはイメージに入るので、 `--build` で最新のコードからイメージを作り直してから実行します。
+
+起動中のサービスへ実際に HTTP を送って、登録から削除までを確認できます。
+
+```bash
+docker compose up --build --detach --wait
+sh scripts/smoke.sh
+```
+
+- `scripts/smoke.sh` は毎回ちがう参加者を1人登録し、最後に削除します。
+- 確認先は `SMOKE_BASE_URL` (既定 `http://localhost:8080`) で変えられます。
 
 ## Docker なしで起動する
 
