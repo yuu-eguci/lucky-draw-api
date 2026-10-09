@@ -1,12 +1,12 @@
 RESTful API for Lucky Draw
 ===
 
-抽選アプリ [lucky-draw-gui](https://github.com/cshimegi/lucky-draw-gui) の参加者を登録・取得・更新・削除する API。
+抽選アプリ [lucky-draw-gui](https://github.com/cshimegi/lucky-draw-gui) の参加者を登録・取得・更新・削除する API です。
 
 - Docker: 対応!
 - Python: 3.14!
 - Linter: Ruff!
-- Test: Django test runner (unittest) + DRF APIClient、起動中のサービスへの smoke test (curl)!
+- Test: Django test runner (unittest) + DRF APIClient + smoke test (curl)!
 - Django: 5.2.18 (LTS)!
 - Django REST framework: 3.18.3!
 
@@ -21,13 +21,14 @@ curl -X POST http://localhost:8080/api/v1/attendee/ \
 curl http://localhost:8080/api/v1/attendee/
 ```
 
-- 起動時に DB を準備して、開発サーバを `localhost:8080` で立ち上げる。
-- POST の例で参加者を1人登録し、続く GET で一覧を取得する。
-- データは Docker volume の SQLite に保存する。コンテナを作り直しても残る。 `docker compose down --volumes` で消える。
-- ブラウザで `http://localhost:8080/api/v1/` を開くと、DRF の画面から API を試せる。
-- 開発用・認証なし。自分の PC からだけアクセスできる設定なので、インターネットには公開しない。
-- 同じ登録例をもう一度送ると、メールアドレスと電話番号の重複で 400 が返る。
-- このページのコマンドは bash 用です。 Windows では `\` での改行・ `<` ・ `>` ・ `sh` を使うコマンドを Git Bash か WSL で実行します (PowerShell では `<` が使えません)。
+- 起動時に DB を準備し、開発サーバを `localhost:8080` で立ち上げます。
+- POST の例で参加者を1人登録し、続く GET で一覧を取得します。
+- データは Docker volume の SQLite に保存します。コンテナを作り直しても残ります。
+- `docker compose down --volumes` は保存データも削除します。
+- ブラウザで `http://localhost:8080/api/v1/` を開くと、 DRF の画面から API を試せます。
+- 開発用・認証なしです。自分の PC からだけアクセスできる設定なので、インターネットには公開しないでください。
+- 同じ登録例をもう一度送ると、メールアドレスと電話番号の重複で 400 が返ります。
+- このページのコマンドは bash 用です。 Windows では Git Bash か WSL で実行してください。 PowerShell は `<` による入力リダイレクトに対応しません。
 
 ## ダミーの参加者を入れたい
 
@@ -72,14 +73,15 @@ curl -X PATCH http://localhost:8080/api/v1/attendee/1/ \
 curl -X DELETE http://localhost:8080/api/v1/attendee/1/
 ```
 
-- `/attendee` 以下のパスは末尾の `/` を省略しても同じように動く。 API root は `/api/v1/` (`/` 付き) で開き、返す URL も `/` 付き。
-- `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) を取得できる。
-- 入力エラーは 400。 `{"phone": ["..."]}` のように項目ごとの JSON が返る。
+- `/attendee` 以下のパスは末尾の `/` を省略しても使えます。
+- API root は `/api/v1/` を開いてください。一覧に含まれる URL も `/` 付きです。
+- `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) を取得できます。
+- 入力エラーは 400 です。 `{"phone": ["..."]}` のように項目ごとの JSON が返ります。
 - エラーメッセージの言語はリクエストの `Accept-Language` に合わせて変わります (例: `ja` なら日本語、指定なしなら英語)。項目名のキーは変わりません。
-- `name`: 1-64 文字。日本語も使える。
-- `email`: メールアドレス。重複不可。
-- `phone`: 8-10 文字の英数字・`-`・`_`。重複不可。先頭の 0 を残すため、文字列で送る。
-- 同じ API は昔からの `/admin/attendee/` でも呼べる。
+- `name`: 1-64 文字です。日本語も使えます。
+- `email`: メールアドレスです。重複は登録できません。
+- `phone`: 8-10 文字の英数字・`-`・`_` です。重複は登録できません。先頭の 0 を残すため、文字列で送ってください。
+- 同じ API は `/admin/attendee/` でも呼べます。
 
 ## 設定 (環境変数)
 
@@ -129,5 +131,5 @@ DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8080
 - Windows の PowerShell では、先に `$env:DJANGO_DEBUG = "1"` を実行してから `python manage.py ...` を実行します。
 - テストは `DJANGO_DEBUG=1 python manage.py test` で実行します。
 
-起動後は `http://localhost:8080/api/v1/` を開けば OK。
-Docker なしの場合、データはプロジェクト内の `db.sqlite3` に保存する。
+起動後は `http://localhost:8080/api/v1/` を開くと API を試せます。
+Docker なしの場合、データはプロジェクト内の `db.sqlite3` に保存します。
