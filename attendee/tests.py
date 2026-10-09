@@ -232,9 +232,7 @@ class ConcurrentDuplicateTests(TestCase):
                 inserted.append(Attendee.objects.create(**competitor))
             return attrs
 
-        return mock.patch.object(
-            AttendeeSerializer, "validate", racing_validate, create=True
-        )
+        return mock.patch.object(AttendeeSerializer, "validate", racing_validate)
 
     def test_create_race_returns_400_instead_of_500(self):
         with self.save_after_competitor(VALID):
