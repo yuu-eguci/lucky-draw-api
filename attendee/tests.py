@@ -71,3 +71,16 @@ class AttendeeApiTests(TestCase):
         res = self.client.post(LIST_URL, {**VALID, "phone": "090 1234"}, format="json")
         self.assertEqual(res.status_code, 400)
         self.assertIn("phone", res.json())
+
+
+class CorsTests(TestCase):
+    def test_whitelisted_origin_is_allowed(self):
+        res = self.client.get(LIST_URL, headers={"Origin": "http://localhost:3000"})
+        self.assertEqual(
+            res.headers["Access-Control-Allow-Origin"], "http://localhost:3000"
+        )
+        self.assertNotIn("Access-Control-Allow-Credentials", res.headers)
+
+    def test_unknown_origin_is_not_allowed(self):
+        res = self.client.get(LIST_URL, headers={"Origin": "http://evil.example"})
+        self.assertNotIn("Access-Control-Allow-Origin", res.headers)
