@@ -97,10 +97,11 @@ docker compose run --rm --build api ruff check .
 docker compose run --rm --build api ruff format --check .
 docker compose run --rm --build api python manage.py makemigrations --check --dry-run
 docker compose run --rm --build api python manage.py test
-docker compose run --rm --build api pip-audit -r requirements.txt
+docker compose run --rm --build api pip-audit
 ```
 
 - コードはイメージに入るので、 `--build` で最新のコードからイメージを作り直してから実行します。
+- `pip-audit` はイメージにインストールされたすべてのパッケージの既知の脆弱性を確認します。
 
 起動中のサービスへ実際に HTTP を送って、登録から削除までを確認できます。
 

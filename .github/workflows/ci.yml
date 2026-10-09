@@ -35,6 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose up --build --detach --wait
+      - name: イメージにインストールされたパッケージの脆弱性を確認
+        run: docker compose run --rm -T api pip-audit
       - run: sh scripts/smoke.sh
       - name: SIGTERM で正常終了すること
         run: |
