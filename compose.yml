@@ -9,7 +9,8 @@ services:
     volumes:
       - lucky-draw-data:/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/v1/')"]
+      # DJANGO_ALLOWED_HOSTS に 127.0.0.1 がなくても判定できるよう、5xx 以外の応答を正常とみなします
+      test: ["CMD", "python", "-c", "import http.client as h; c = h.HTTPConnection('127.0.0.1', 8080, timeout=4); c.request('GET', '/api/v1/'); raise SystemExit(c.getresponse().status >= 500)"]
       interval: 30s
       timeout: 5s
       retries: 3
