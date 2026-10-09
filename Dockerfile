@@ -15,4 +15,4 @@ COPY --chown=app:app . .
 USER app
 
 EXPOSE 8080
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8080"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec python manage.py runserver 0.0.0.0:8080"]
