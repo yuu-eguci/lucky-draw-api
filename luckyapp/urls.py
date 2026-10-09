@@ -13,13 +13,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+
 from .api_routers import router
 
-API_V1_BASE_PATH = 'api/v1/'
+# Django 3.2+ の admin は未定義パスをログイン画面へ転送するため、
+# 従来の /admin/attendee/ が router に届くよう無効にします
+admin.site.final_catch_all_view = False
+
+API_V1_BASE_PATH = "api/v1/"
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('admin/', include(router.urls)),
-    path(API_V1_BASE_PATH, include(router.urls)), # include api url pattern here
+    path("admin/", admin.site.urls),
+    path("admin/", include(router.urls)),
+    path(API_V1_BASE_PATH, include(router.urls)),  # include api url pattern here
 ]

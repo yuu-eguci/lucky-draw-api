@@ -1,12 +1,12 @@
-from django.db import models
 from django.core.validators import (
+    MaxLengthValidator,
+    MinLengthValidator,
     validate_email,
     validate_slug,
-    MinLengthValidator,
-    MaxLengthValidator
 )
+from django.db import models
 
-# Create your models here.
+
 class Attendee(models.Model):
     # properties
     MIN_NAME_LEN = 1
@@ -14,29 +14,27 @@ class Attendee(models.Model):
     MAX_PHONE_LEN = 10
     MIN_PHONE_LEN = 8
 
-    name  = models.CharField(
-        max_length = MAX_NAME_LEN,
-        validators = [
-            MinLengthValidator,
-            MaxLengthValidator
-        ]
+    name = models.CharField(
+        max_length=MAX_NAME_LEN,
+        validators=[
+            MinLengthValidator(MIN_NAME_LEN),
+            MaxLengthValidator(MAX_NAME_LEN),
+        ],
     )
-    email = models.EmailField(
-        unique = True,
-        validators = [
-            validate_email
-        ]
-    )
+    email = models.EmailField(unique=True, validators=[validate_email])
     phone = models.CharField(
-        unique = True,
-        max_length = MAX_PHONE_LEN,
-        validators = [
+        unique=True,
+        max_length=MAX_PHONE_LEN,
+        validators=[
             validate_slug,
-            MinLengthValidator,
-            MaxLengthValidator
-        ]
+            MinLengthValidator(MIN_PHONE_LEN),
+            MaxLengthValidator(MAX_PHONE_LEN),
+        ],
     )
 
     class Meta:
-        verbose_name = 'attendee table'
+        verbose_name = "attendee table"
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
