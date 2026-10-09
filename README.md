@@ -36,7 +36,20 @@ curl http://localhost:8080/api/v1/attendee/
 | PUT / PATCH | `/api/v1/attendee/{id}/` | 更新 |
 | DELETE | `/api/v1/attendee/{id}/` | 削除 |
 
-- `name`: 1-64 文字
+```bash
+curl http://localhost:8080/api/v1/attendee/1/
+curl -X PUT http://localhost:8080/api/v1/attendee/1/ \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "taro", "email": "taro@example.com", "phone": "0901234567"}'
+curl -X PATCH http://localhost:8080/api/v1/attendee/1/ \
+  -H 'Content-Type: application/json' -d '{"name": "jiro"}'
+curl -X DELETE http://localhost:8080/api/v1/attendee/1/
+```
+
+- 末尾の `/` は必須です
+- `curl http://localhost:8080/api/v1/` でエンドポイント一覧 (JSON) が返ります
+- 入力エラーは 400 で `{"phone": ["..."]}` のような JSON が返ります
+- `name`: 1-64 文字 (日本語も可)
 - `email`: メールアドレス、重複不可
 - `phone`: 8-10 文字の英数字・`-`・`_`、重複不可
 - 同じ API は昔からの `/admin/attendee/` でも呼べます
@@ -66,7 +79,7 @@ docker compose run --rm api pip-audit -r requirements.txt
 ## Installation from scratch (Docker なし)
 
 ```bash
-git clone https://github.com/cshimegi/lucky-draw-api.git
+git clone https://github.com/yuu-eguci/lucky-draw-api.git
 cd lucky-draw-api
 python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\Scripts\activate
