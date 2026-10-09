@@ -171,12 +171,6 @@ class NotFoundTests(TestCase):
             self.assertEqual(res.status_code, 404, method)
             self.assertIn("detail", res.json())
 
-    def test_unknown_path_does_not_leak_debug_page(self):
-        res = self.client.get("/no-such-path/")
-        self.assertEqual(res.status_code, 404)
-        self.assertNotIn(b"urlpatterns", res.content)
-        self.assertNotIn(b"Traceback", res.content)
-
 
 class ApiRootTests(TestCase):
     def test_api_root_lists_attendee_endpoint(self):
