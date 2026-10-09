@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
+    ignore:
+      # Django は LTS の 5.2 系を使います (django-cors-headers の対応状況に合わせています)
+      - dependency-name: django
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Python は 3.14 系のパッチ更新だけを受け取ります
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
