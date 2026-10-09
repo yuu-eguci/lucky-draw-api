@@ -6,7 +6,7 @@ RESTful API for Lucky Draw
 - Docker: 対応!
 - Python: 3.14!
 - Linter: Ruff!
-- Test: Django test runner (unittest) + DRF APIClient!
+- Test: Django test runner (unittest) + DRF APIClient、起動中のサービスへの smoke test (curl)!
 - Django: 5.2.18 (LTS)!
 - Django REST framework: 3.18.3!
 
